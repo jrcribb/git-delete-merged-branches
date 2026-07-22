@@ -16,21 +16,21 @@ from .helpers import create_dmb, create_git, run_script
 class MergeDetectionTest(TestCase):
     def test_effort_1_truly_merged(self):
         setup_script = dedent("""
-            git init -b master
+            git init -b trunk
 
             # Create a commit to base future branches upon
             echo line1 > file.txt
             git add file.txt
             git commit -m 'Add file.txt with one line'
 
-            # Create a merged branch: With HEAD sitting in master's past
+            # Create a merged branch: With HEAD sitting in trunk's past
             git branch merged1
 
             # Create a merged branch: Topic branch with original commit
             git checkout -b merged2
             echo line2 >> file.txt
             git commit -a -m 'Add line 2'
-            git checkout master
+            git checkout trunk
             git merge --no-ff --no-edit merged2
 
             # Create a not-merged branch
@@ -43,12 +43,12 @@ class MergeDetectionTest(TestCase):
             git = create_git(d)
             dmb = create_dmb(git, effort_level=1)
             self.assertEqual(
-                git.find_local_branches(), ["master", "merged1", "merged2", "not-merged1"]
+                git.find_local_branches(), ["merged1", "merged2", "not-merged1", "trunk"]
             )
 
             truly_merged, defacto_merged = (
                 dmb._find_branches_merged_to_all_targets_for_single_remote(
-                    {"master"}, set(), remote_name=None
+                    {"trunk"}, set(), remote_name=None
                 )
             )
 
@@ -57,7 +57,7 @@ class MergeDetectionTest(TestCase):
 
     def test_effort_2_unsquashed_cherries(self):
         setup_script = dedent("""
-            git init -b master
+            git init -b trunk
 
             # Create a commit to base future branches upon
             echo line1 > file1.txt
@@ -74,7 +74,7 @@ class MergeDetectionTest(TestCase):
             git commit -m 'Add file3.txt'
 
             # Create a de-facto merged branch: backward order
-            git checkout -b defacto-merged2 master
+            git checkout -b defacto-merged2 trunk
             cp file1.txt file3.txt
             git add file3.txt
             git commit -m 'Add file3.txt'
@@ -82,14 +82,14 @@ class MergeDetectionTest(TestCase):
             git add file2.txt
             git commit -m 'Add file2.txt'
 
-            # Add an extra commit on master so that we don't get
+            # Add an extra commit on trunk so that we don't get
             # identical SHA1s when cherry-picking, after
-            git checkout master
+            git checkout trunk
             cp file1.txt file4.txt
             git add file4.txt
             git commit -m 'Add file4.txt'
 
-            # Get the commits on master that will make
+            # Get the commits on trunk that will make
             # branches defacto-merged{1,2} be detected as de-facto merged
             git cherry-pick defacto-merged1{^,}
 
@@ -105,12 +105,12 @@ class MergeDetectionTest(TestCase):
             dmb = create_dmb(git, effort_level=2)
             self.assertEqual(
                 git.find_local_branches(),
-                ["defacto-merged1", "defacto-merged2", "master", "not-defacto-merged1"],
+                ["defacto-merged1", "defacto-merged2", "not-defacto-merged1", "trunk"],
             )
 
             truly_merged, defacto_merged = (
                 dmb._find_branches_merged_to_all_targets_for_single_remote(
-                    {"master"}, set(), remote_name=None
+                    {"trunk"}, set(), remote_name=None
                 )
             )
 
@@ -119,7 +119,7 @@ class MergeDetectionTest(TestCase):
 
     def test_effort_3_squashed_cherries(self):
         setup_script = dedent("""
-            git init -b master
+            git init -b trunk
 
             # Create a commit to base future branches upon
             echo line1 > file1.txt
@@ -140,9 +140,9 @@ class MergeDetectionTest(TestCase):
             git revert --no-edit HEAD
             git revert --no-edit HEAD  # i.e. revert the revert
 
-            # Get the a squashed commit on master that will make
+            # Get the a squashed commit on trunk that will make
             # branches defacto-squash-merged{1,2} be detected as de-facto merged
-            git checkout master
+            git checkout trunk
             git merge --squash defacto-squash-merged1
             git commit -m "Add squashed copy of 'defacto-squash-merged1'"
 
@@ -160,14 +160,14 @@ class MergeDetectionTest(TestCase):
                 [
                     "defacto-squash-merged1",
                     "defacto-squash-merged2",
-                    "master",
                     "not-defacto-squash-merged1",
+                    "trunk",
                 ],
             )
 
             truly_merged, defacto_merged = (
                 dmb._find_branches_merged_to_all_targets_for_single_remote(
-                    {"master"}, set(), remote_name=None
+                    {"trunk"}, set(), remote_name=None
                 )
             )
 
@@ -180,7 +180,7 @@ class RefreshTargetBranchesTest(TestCase):
         setup_script = dedent("""
             mkdir upstream
             cd upstream
-                git init -b master
+                git init -b trunk
                 git commit --allow-empty -m 'Dummy commit #1'
                 git branch pull-works
                 git branch pull-trouble
@@ -188,7 +188,7 @@ class RefreshTargetBranchesTest(TestCase):
                     echo line1 > collision.txt
                     git add collision.txt
                     git commit -m 'Add collision.txt'
-                git checkout master
+                git checkout trunk
             cd ..
             git clone -o upstream upstream downstream
             cd downstream
@@ -215,7 +215,7 @@ class RefreshTargetBranchesTest(TestCase):
             self.assertEqual(downstream_git.find_current_branch(), "topic1")
             self.assertEqual(
                 downstream_git.find_local_branches(),
-                ["checkout-trouble", "master", "pull-trouble", "pull-works", "topic1"],
+                ["checkout-trouble", "pull-trouble", "pull-works", "topic1", "trunk"],
             )
             downstream_dmb.refresh_remotes(["upstream"])
             self.assertEqual(len(downstream_git.cherry("pull-works", "upstream/pull-works")), 1)

@@ -17,8 +17,8 @@ from .helpers import create_git, run_script
 
 class FindBranchesTest(TestCase):
     def test_find_branches_drops_head(self):
-        existing_branches = ["remote1/HEAD", "remote2/master"]
-        expected_branches = ["remote2/master"]
+        existing_branches = ["remote1/HEAD", "remote2/trunk"]
+        expected_branches = ["remote2/trunk"]
         git = Git(Messenger(colorize=False), pretend=True, verbose=False)
         command_output_to_inject = ("\n".join(existing_branches) + "\n").encode("utf-8")
         assert isinstance(command_output_to_inject, bytes)
