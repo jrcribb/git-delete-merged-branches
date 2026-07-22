@@ -16,7 +16,7 @@ from .helpers import create_dmb, create_git, run_script
 class MergeDetectionTest(TestCase):
     def test_effort_1_truly_merged(self):
         setup_script = dedent("""
-            git init
+            git init -b master
 
             # Create a commit to base future branches upon
             echo line1 > file.txt
@@ -57,7 +57,7 @@ class MergeDetectionTest(TestCase):
 
     def test_effort_2_unsquashed_cherries(self):
         setup_script = dedent("""
-            git init
+            git init -b master
 
             # Create a commit to base future branches upon
             echo line1 > file1.txt
@@ -119,7 +119,7 @@ class MergeDetectionTest(TestCase):
 
     def test_effort_3_squashed_cherries(self):
         setup_script = dedent("""
-            git init
+            git init -b master
 
             # Create a commit to base future branches upon
             echo line1 > file1.txt
@@ -180,7 +180,7 @@ class RefreshTargetBranchesTest(TestCase):
         setup_script = dedent("""
             mkdir upstream
             cd upstream
-                git init
+                git init -b master
                 git commit --allow-empty -m 'Dummy commit #1'
                 git branch pull-works
                 git branch pull-trouble
