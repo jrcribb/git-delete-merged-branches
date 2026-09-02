@@ -7,7 +7,7 @@ from typing import Any
 
 def without(needle: list[Any], container: list[Any]) -> list[Any]:
     """
-    Create a copy of a list with all occurences of sublist ``needle`` removed.
+    Create a copy of a list with all occurrences of sublist ``needle`` removed.
     """
     if not needle:
         return copy.copy(container)
